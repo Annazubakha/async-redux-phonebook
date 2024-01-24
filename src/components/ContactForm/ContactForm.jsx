@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { nanoid } from 'nanoid';
 import s from './ContactForm.module.css';
 import { useDispatch, useSelector } from 'react-redux';
-import { addContact } from '../../redux/contactsSlice';
+import { addContactThunk } from '../../redux/operations';
 import { toast } from 'react-toastify';
 import { selectContacts } from '../../redux/selectors';
 
@@ -10,7 +10,7 @@ export const ContactForm = () => {
   const dispatch = useDispatch();
   const [name, setName] = useState('');
   const [number, setNumber] = useState('');
-  const contacts = useSelector(selectContacts);
+  const items = useSelector(selectContacts);
 
   const handleChange = event => {
     const { name, value } = event.currentTarget;
@@ -26,17 +26,23 @@ export const ContactForm = () => {
         break;
     }
   };
-  const oldContact = contacts.find(
-    contact => contact.name.toLowerCase() === name.toLowerCase()
-  );
+  const findOldContact = name => {
+    const oldContact = items.find(
+      item => item.name.toLowerCase() === name.toLowerCase()
+    );
+    if (oldContact) {
+      return toast.error(`${name} is already in contacts.`);
+    } else {
+      return oldContact;
+    }
+  };
+
   const handleSubmit = event => {
     event.preventDefault();
-
-    if (oldContact) {
-      toast.error(`${name} is already in contacts.`);
+    if (findOldContact(name)) {
       return;
     }
-    dispatch(addContact({ name, number, id: nanoid() }));
+    dispatch(addContactThunk({ name, number }));
     toast.success(`${name} was added to contacts successfully.`);
     reset();
   };
